@@ -40,36 +40,26 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
-          if (firebaseUser) {
-            console.log("Auth UID:", firebaseUser.uid); // Copy this
-            const userDocRef = doc(db, "users", firebaseUser.uid);
-            const userDocSnap = await retryFirebaseOperation(() => getDoc(userDocRef), 3, 500);
-            console.log("Doc exists:", userDocSnap.exists()); // Should be true
-            console.log("Doc data:", userDocSnap.data());     // Should show your fields
+        if (firebaseUser) {
+          const userDocRef = doc(db, "users", firebaseUser.uid);
+          const userDocSnap = await retryFirebaseOperation(() => getDoc(userDocRef), 3, 500);
 
           if (userDocSnap.exists()) {
-            const userData = userDocSnap.data() as UserData;
-            setUser(userData);
+            setUser(userDocSnap.data() as UserData);
           } else {
-            // User exists in Auth but not in Firestore - create minimal user object
-            console.warn("User not found in Firestore, creating minimal user object");
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email || "",
-              role: "maintenance",
-              fullName: firebaseUser.displayName || "User",
-              createdAt: new Date(),
-            });
+            // No Firestore doc = treat as unauthenticated
+            console.warn("No Firestore doc for this user. Signing out.");
+            await signOut(auth);
+            setUser(null);
           }
         } else {
           setUser(null);
         }
       } catch (error) {
         console.error("Error loading user data:", error);
-        // Don't block the app on error - user can still proceed
         setUser(null);
       } finally {
-        setIsLoading(false);
+        setIsLoading(false); // ✅ Always runs, unblocks routing
       }
     });
 

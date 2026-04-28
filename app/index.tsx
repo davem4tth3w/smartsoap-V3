@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useFirebaseAuth } from "@/lib/firebase-auth-context";
-import { View } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 
 export default function RootIndex() {
   const router = useRouter();
@@ -15,7 +15,12 @@ export default function RootIndex() {
         router.replace("/login");
       }
     }
-  }, [isSignedIn, isLoading, router]);
+  }, [isSignedIn, isLoading]);
 
-  return <View className="flex-1 bg-background" />;
+  // Show a spinner while Firebase resolves auth state
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <ActivityIndicator size="large" />
+    </View>
+  );
 }

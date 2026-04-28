@@ -1,17 +1,17 @@
-import { Tabs } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useEffect } from "react";                          // ← ADD
+import { useEffect } from "react";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform } from "react-native";
 import { useColors } from "@/hooks/use-colors";
-import { useFirebaseAuth } from "@/lib/firebase-auth-context";  // ← ADD
-import { initializeFirebaseDatabase } from "@/lib/firebase-init"; // ← ADD
+import { useFirebaseAuth } from "@/lib/firebase-auth-context";
+import { initializeFirebaseDatabase } from "@/lib/firebase-init";
 
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { user } = useFirebaseAuth();                       // ← ADD
+  const { user, isSignedIn, isLoading } = useFirebaseAuth();
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = 56 + bottomPadding;
 
@@ -20,6 +20,10 @@ export default function TabLayout() {
       initializeFirebaseDatabase();
     }
   }, [user]);
+
+  // Auth guard — must be AFTER all hooks
+  if (isLoading) return null;
+  if (!isSignedIn) return <Redirect href="/login" />;
 
   return (
     <Tabs

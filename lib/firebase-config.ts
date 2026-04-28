@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore"; // ← remove enableIndexedDbPersistence
+import { getFirestore } from "firebase/firestore"; 
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -18,10 +18,6 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-
-// ✅ REMOVED: enableIndexedDbPersistence
-// This was caching a stale Auth session across restarts, causing the
-// app to skip login and show a blank dashboard on mobile.
 
 export async function retryFirebaseOperation<T>(
   operation: () => Promise<T>,

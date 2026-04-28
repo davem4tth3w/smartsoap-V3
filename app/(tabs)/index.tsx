@@ -217,7 +217,7 @@ export default function DashboardScreen() {
             position: "absolute",
             bottom: 24,
             right: 24,
-            backgroundColor: pressed ? "#0847A3" : "#0A5BA8",
+            backgroundColor: pressed ? "#0847A3" : "#4aa7ff",
             transform: [{ scale: pressed ? 0.95 : 1 }],
             borderRadius: 32,
             flexDirection: "row",
@@ -233,8 +233,8 @@ export default function DashboardScreen() {
             elevation: 8,
           })}
         >
-          <Text style={{ color: "#fff", fontSize: 22, lineHeight: 24, marginRight: 8 }}>＋</Text>
-          <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Add Dispenser</Text>
+          <Text style={{ color: "#ffffff", fontSize: 22, lineHeight: 24, marginRight: 8 }}>＋</Text>
+          <Text style={{ color: "#ffffff", fontWeight: "700", fontSize: 15 }}>Add Dispenser</Text>
         </Pressable>
       )}
       {/* ──────────────────────────────────────────────────────────────────── */}
