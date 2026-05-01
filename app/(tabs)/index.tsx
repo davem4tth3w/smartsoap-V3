@@ -4,6 +4,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useFirebaseAuth } from "@/lib/firebase-auth-context";
 import { MOCK_DISPENSERS, getStatusColor, getStatusLabel, type Dispenser } from "@/lib/mock-data";
 import * as Haptics from "expo-haptics";
+import { useRouter } from "expo-router";
 
 export default function DashboardScreen() {
   const { user } = useFirebaseAuth();
@@ -51,13 +52,14 @@ export default function DashboardScreen() {
     }
   };
 
-    // ─── NEW: Add Dispenser handler ───────────────────────────────────────────
+  const nav = useRouter();
+
+  // Add Dispenser handler
   const handleAddDispenser = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // TODO: navigate to Add Dispenser screen or open a form modal
-    console.log("Add Dispenser pressed");
+    nav.push("/dispenser/add/select-dispenser"); 
   };
-  // ──────────────────────────────────────────────────────────────────────────
+
 
   const floors = Array.from(new Set(MOCK_DISPENSERS.map((d) => d.floor))).sort();
 

@@ -4,7 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User,
+  User, 
 } from "firebase/auth";
 import { auth, db, retryFirebaseOperation } from "./firebase-config";
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";

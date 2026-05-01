@@ -155,3 +155,10 @@
 - [x] Enable offline persistence in Firebase config
 - [x] Verify Firebase credentials are correctly loaded
 - [x] Test Firebase connection with proper error handling
+
+
+## Setup a dispenser feature
+- [ ] Admin can add a dispenser in dashboard
+
+
+## Setup a WIFI Manager

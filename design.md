@@ -195,7 +195,7 @@ A role-based mobile app for monitoring and managing soap dispenser usage and mai
 - `status` — "ok" | "low" | "critical" | "offline"
 - `lastRefill` — timestamp
 - `usageCount` — total button presses
-- `assignedTo` — array of Maintenance user IDs (for shift-based access)
+
 
 ### User
 - `id` — unique identifier

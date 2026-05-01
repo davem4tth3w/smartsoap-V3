@@ -322,27 +322,7 @@ export default function SettingsScreen() {
         >
           <Text className="text-white font-bold text-lg">Sign Out</Text>
         </Pressable>
-        
-        {/* Sign Out Button design 2
-        <Pressable
-          onPress={handleLogout}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.7 : 1,
-            transform: [{ scale: pressed ? 0.98 : 1 }],
-            borderColor: "#EF4444",
-            borderWidth: 1.5,
-            borderRadius: 16,
-            paddingVertical: 14,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            marginBottom: 24,
-          })}
-        >
-          <Text style={{ fontSize: 18, color: "#EF4444" }}>→</Text>
-          <Text style={{ color: "#EF4444", fontWeight: "700", fontSize: 16 }}>Sign Out</Text>
-        </Pressable> */}
+
 
         {/* About Section */}
         <View className="bg-surface rounded-2xl p-4 border border-border mb-6 bg-opacity-50">

@@ -86,7 +86,7 @@ dispensers/{dispenserId}
 ├── usageCount: number
 ├── lastRefill: timestamp
 ├── status: "ok" | "low" | "critical" | "offline"
-└── assignedTo: array (user IDs)
+
 ```
 
 ### Events Collection
