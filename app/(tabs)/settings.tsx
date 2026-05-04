@@ -1,10 +1,13 @@
+import { initializeApp } from "firebase/app";
 import { useState, useEffect } from "react";
 import { ScrollView, Text, View, Pressable, Switch, Alert, TextInput, Modal, FlatList } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useFirebaseAuth } from "@/lib/firebase-auth-context";
+import { doc, setDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase-config";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SettingsScreen() {
   const { user, signOut } = useFirebaseAuth();
@@ -42,24 +45,27 @@ export default function SettingsScreen() {
     shift: "morning" as "morning" | "afternoon" | "evening",
   });
 
+  //Handle default users
+  const defaultUsers = allUsers.filter((u) =>
+    u.defaultAdmin === true || u.defaultMaintenance === true || u.defaultMaintenance === "true"
+  );
+
+  const normalUsers = allUsers.filter((u) =>
+    !(u.defaultAdmin === true || u.defaultMaintenance === true || u.defaultMaintenance === "true")
+  );
+    
+
   // Load all users
   useEffect(() => {
     const loadUsers = async () => {
-      try {
-        const usersJson = await AsyncStorage.getItem("registered_users");
-        if (usersJson) {
-          const users = JSON.parse(usersJson);
-          setAllUsers(
-            Object.entries(users).map(([email, data]: [string, any]) => ({
-              email,
-              ...data.user,
-            }))
-          );
-        }
-      } catch (e) {
-        console.error("Failed to load users", e);
-      }
+      const snapshot = await getDocs(collection(db, "users"));
+      const users = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setAllUsers(users);
     };
+
     loadUsers();
   }, []);
 
@@ -78,82 +84,53 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const handleAddUser = async () => {
-    if (!newUserData.name || !newUserData.email || !newUserData.password) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
+const handleAddUser = async () => {
+  if (!newUserData.email || !newUserData.password) {
+    Alert.alert("Error", "Missing fields");
+    return;
+  }
 
-    try {
-      const usersJson = await AsyncStorage.getItem("registered_users");
-      const users = usersJson ? JSON.parse(usersJson) : {};
+  const currentAdmin = auth.currentUser;
 
-      if (users[newUserData.email]) {
-        Alert.alert("Error", "Email already registered");
-        return;
-      }
+  if (!currentAdmin) {
+    Alert.alert("Error", "Admin session not found");
+    return;
+  }
 
-      const newUser = {
-        id: `user-${Date.now()}`,
-        name: newUserData.name,
-        email: newUserData.email,
-        role: newUserData.role,
-        ...(newUserData.role === "maintenance" && {
-          employeeId: newUserData.employeeId,
-          shift: newUserData.shift,
-        }),
-      };
+  try {
+    // Create user (this may temporarily switch auth state internally)
+    const cred = await createUserWithEmailAndPassword(
+      auth,
+      newUserData.email,
+      newUserData.password
+    );
 
-      users[newUserData.email] = {
-        password: newUserData.password,
-        user: newUser,
-      };
+    const uid = cred.user.uid;
 
-      await AsyncStorage.setItem("registered_users", JSON.stringify(users));
-      setAllUsers([...allUsers, newUser]);
-      setIsAddUserModalVisible(false);
-      setNewUserData({
-        name: "",
-        email: "",
-        password: "",
-        role: "maintenance",
-        employeeId: "",
-        shift: "morning",
-      });
-      Alert.alert("Success", "User added successfully");
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (e) {
-      Alert.alert("Error", "Failed to add user");
-    }
-  };
+    await setDoc(doc(db, "users", uid), {
+      name: newUserData.name,
+      email: newUserData.email,
+      role: newUserData.role,
+      employeeId: newUserData.employeeId || null,
+      shift: newUserData.shift || null,
+    });
 
-  const handleDeleteUser = (email: string) => {
-    Alert.alert("Delete User", `Are you sure you want to delete ${email}?`, [
-      { text: "Cancel", onPress: () => {} },
-      {
-        text: "Delete",
-        onPress: async () => {
-          try {
-            // Delete user from Firebase (implement in Firebase auth context)
-            // For now, just remove from local storage
-            const usersJson = await AsyncStorage.getItem('registered_users');
-            if (usersJson) {
-              const users = JSON.parse(usersJson);
-              const updatedUsers = users.filter((u: any) => u.email !== email);
-              await AsyncStorage.setItem('registered_users', JSON.stringify(updatedUsers));
-              setAllUsers(updatedUsers);
-            }
-            setAllUsers(allUsers.filter((u) => u.email !== email));
-            Alert.alert("Success", "User deleted successfully");
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } catch (e) {
-            Alert.alert("Error", "Failed to delete user");
-          }
-        },
-        style: "destructive",
-      },
-    ]);
-  };
+    // 🔥 CRITICAL FIX: immediately restore admin session
+    await auth.updateCurrentUser(currentAdmin);
+
+    setIsAddUserModalVisible(false);
+
+    Alert.alert("Success", "User created successfully");
+
+  } catch (e) {
+    console.error(e);
+    Alert.alert("Error", "Failed to create user");
+  }
+};
+
+const handleDeleteUser = async (id: string) => {
+  await deleteDoc(doc(db, "users", id));
+};
 
   const handleUpdateThreshold = async () => {
     if (!thresholdValue || selectedThresholdKey === null) return;
@@ -286,31 +263,66 @@ export default function SettingsScreen() {
                 <Text className="text-white text-xs font-bold">+ Add User</Text>
               </Pressable>
             </View>
+              {/* Default Accounts (Pinned) */}
+              {defaultUsers.length > 0 && (
+                <View className="mb-4">
+                  <Text className="text-xs font-bold text-muted mb-2">
+                    Default Accounts
+                  </Text>
 
-            {allUsers.map((u) => (
-              <View key={u.id} className="flex-row justify-between items-center py-3 border-b border-border">
-                <View className="flex-1">
-                  <Text className="text-sm font-semibold text-foreground">{u.name}</Text>
-                  <Text className="text-xs text-muted">{u.email}</Text>
+                  {defaultUsers.map((u) => (
+                    <View
+                      key={u.id}
+                      className="flex-row justify-between items-center py-3 border-b border-border opacity-80"
+                    >
+                      <View className="flex-1">
+                        <Text className="text-sm font-semibold text-foreground">
+                          {u.name} (Default)
+                        </Text>
+                        <Text className="text-xs text-muted">{u.email}</Text>
+                      </View>
+
+                      <View className="bg-primary px-2 py-1 rounded-lg">
+                        <Text className="text-white text-xs font-bold capitalize">
+                          {u.role}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
                 </View>
-                <View className="flex-row gap-2">
-                  <Pressable
-                    onPress={() => Alert.alert("Edit", `Edit user: ${u.name}`)}
-                    style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                    className="bg-primary bg-opacity-30 rounded-lg px-2 py-1 border border-primary border-opacity-50"
-                  >
-                    <Text className="text-xs font-bold text-primary">Edit</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => handleDeleteUser(u.email)}
-                    style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                    className="bg-error bg-opacity-30 rounded-lg px-2 py-1 border border-error border-opacity-50"
-                  >
-                    <Text className="text-xs font-bold text-error">Delete</Text>
-                  </Pressable>
+              )}
+
+              {/* Regular Users */}
+              {normalUsers.map((u) => (
+                <View
+                  key={u.id}
+                  className="flex-row justify-between items-center py-3 border-b border-border"
+                >
+                  <View className="flex-1">
+                    <Text className="text-sm font-semibold text-foreground">{u.name}</Text>
+                    <Text className="text-xs text-muted">{u.email}</Text>
+                  </View>
+
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      onPress={() => Alert.alert("Edit", `Edit user: ${u.name}`)}
+                      className="bg-primary bg-opacity-30 rounded-lg px-2 py-1 border border-primary border-opacity-50"
+                    >
+                      <Text className="text-xs font-bold text-white">Edit</Text>
+                    </Pressable>
+
+                    {/* Prevent deleting default accounts */}
+                    <Pressable
+                      onPress={() => handleDeleteUser(u.id)}
+                      disabled={u.defaultAdmin === true || u.defaultMaintenance === true}
+                      className="bg-error bg-opacity-30 rounded-lg px-2 py-1 border border-error border-opacity-50"
+                    >
+                      <Text className="text-xs font-bold text-white">Delete</Text>
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))}
+
           </View>
         )}
 

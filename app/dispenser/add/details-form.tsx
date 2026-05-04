@@ -1,3 +1,5 @@
+import { auth } from "../../../lib/firebase-config";
+import { getDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -29,16 +31,36 @@ export default function AddDispenserScreen() {
   // ─── Submit Handler ─────────────────────────────────────
   const handleSubmit = async () => {
     try {
+      // 🔐 1. AUTH CHECK (must be first)
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        Alert.alert("Error", "Not authenticated.");
+        return;
+      }
+
+      // 🔐 2. ROLE CHECK (must happen before writing data)
+      const userSnap = await getDoc(doc(db, "users", currentUser.uid));
+
+      if (!userSnap.exists() || userSnap.data().role !== "admin") {
+        Alert.alert("Error", "Unauthorized action.");
+        return;
+      }
+
+      // ─────────────────────────────────────────────
+      // ✅ ONLY ADMIN USERS REACH THIS POINT
+      // ─────────────────────────────────────────────
+
       if (!deviceId) {
         Alert.alert("Error", "No device selected.");
         return;
       }
 
       const payload = {
-        assignmentStatus: "assigned", // required field
-        deviceName: `Dispenser ${deviceId}`, // optional naming
+        assignmentStatus: "assigned",
+        deviceName: `Dispenser ${deviceId}`,
         name,
-        floor, 
+        floor,
         location,
         status,
         soapLevel: Number(soapLevel) || 0,
@@ -46,19 +68,17 @@ export default function AddDispenserScreen() {
         lastRefill: new Date(),
       };
 
-      // 🔥 Save to Firestore
       await setDoc(doc(db, "dispensers", String(deviceId)), payload);
 
       console.log("✅ Saved to Firestore:", payload);
 
-      // Navigate to success page
       router.replace({
         pathname: "/dispenser/add/success",
         params: {
           deviceId,
-          name: name,
-          floor: floor,
-          location: location,
+          name,
+          floor,
+          location,
         },
       });
 

@@ -9,7 +9,7 @@ const firebaseConfig = {
   storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-};
+};  
 
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   console.error("Firebase configuration is incomplete. Check your environment variables.");

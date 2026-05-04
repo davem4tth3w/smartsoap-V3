@@ -1,34 +1,60 @@
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase-config";
 import { useState, useEffect, useMemo } from "react";
-import { ScrollView, Text, View, Pressable, RefreshControl, FlatList, Modal } from "react-native";
+import { StyleSheet, ScrollView, View, Text, Pressable, RefreshControl, FlatList, Modal} from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useFirebaseAuth } from "@/lib/firebase-auth-context";
-import { MOCK_DISPENSERS, getStatusColor, getStatusLabel, type Dispenser } from "@/lib/mock-data";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 
 export default function DashboardScreen() {
   const { user } = useFirebaseAuth();
-  const [dispensers, setDispensers] = useState<Dispenser[]>([]);
+  const [dispensers, setDispensers] = useState<Dispenser[]>([]);  
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
   const [selectedDispenser, setSelectedDispenser] = useState<Dispenser | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // Filter dispensers based on user role
+  // Fetch "assigned" dispensers from Firestore in real-time
   useEffect(() => {
-    let filtered = MOCK_DISPENSERS;
+    const q = query(
+      collection(db, "dispensers"),
+      where("assignmentStatus", "==", "assigned")
+    );
 
-    // Maintenance users only see assigned dispensers
-    if (user?.role === "maintenance") {
-      filtered = filtered.filter((d) => d.assignedTo.includes(user?.uid));
-    }
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        let fetched: Dispenser[] = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name ?? data.deviceName ?? doc.id,
+            location: data.location ?? "",
+            floor: typeof data.floor === "string" ? parseInt(data.floor, 10) : (data.floor ?? 0),
+            status: data.status || "ok",
+            soapLevel: data.soapLevel ?? 0,
+            batteryLevel: data.batteryLevel ?? 0,
+            usageCount: data.usageCount ?? 0,
+            lastRefill: data.lastRefill?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+            assignedTo: data.assignedTo ?? [],
+            assignmentStatus: data.assignmentStatus,
+          } as Dispenser;
+        });
 
-    // Filter by floor if selected
-    if (selectedFloor !== null) {
-      filtered = filtered.filter((d) => d.floor === selectedFloor);
-    }
+        // Filter by floor if selected
+        if (selectedFloor !== null) {
+          fetched = fetched.filter((d) => d.floor === selectedFloor);
+        }
 
-    setDispensers(filtered);
+        setDispensers(fetched);
+      },
+      (error) => {
+        console.error("Firestore onSnapshot error:", error);
+      }
+    );
+
+    return () => unsubscribe(); // cleanup listener on unmount
   }, [user, selectedFloor]);
 
   const handleRefresh = async () => {
@@ -60,8 +86,7 @@ export default function DashboardScreen() {
     nav.push("/dispenser/add/select-dispenser"); 
   };
 
-
-  const floors = Array.from(new Set(MOCK_DISPENSERS.map((d) => d.floor))).sort();
+  const floors = Array.from(new Set(dispensers.map((d) => d.floor))).sort();
 
   const renderDispenserCard = ({ item }: { item: Dispenser }) => (
     <Pressable
@@ -88,11 +113,10 @@ export default function DashboardScreen() {
         {/* Soap Level */}
         <View className="flex-1 bg-primary bg-opacity-20 rounded-lg p-3 border border-primary border-opacity-30">
           <Text className="text-xs text-muted font-semibold mb-1">SOAP</Text>
-          <Text className="text-2xl font-bold text-primary">{item.soapLevel}%</Text>
+          <Text className="text-2xl font-bold text-white">{item.soapLevel}%</Text>
           <View className="h-1 bg-border rounded-full mt-2 overflow-hidden">
             <View
-              style={{ width: `${item.soapLevel}%` }}
-              className="h-full bg-primary"
+              style={[{ width: `${item.soapLevel}%` }, styles.soapBar]}
             />
           </View>
         </View>
@@ -100,11 +124,10 @@ export default function DashboardScreen() {
         {/* Battery Level */}
         <View className="flex-1 bg-primary bg-opacity-20 rounded-lg p-3 border border-primary border-opacity-30">
           <Text className="text-xs text-muted font-semibold mb-1">BATTERY</Text>
-          <Text className="text-2xl font-bold text-primary">{item.batteryLevel}%</Text>
+          <Text className="text-2xl font-bold text-white">{item.batteryLevel}%</Text>
           <View className="h-1 bg-border rounded-full mt-2 overflow-hidden">
             <View
-              style={{ width: `${item.batteryLevel}%` }}
-              className="h-full bg-primary"
+              style={[{ width: `${item.batteryLevel}%` }, styles.batteryBar]}
             />
           </View>
         </View>
@@ -209,34 +232,23 @@ export default function DashboardScreen() {
             }
           />
         </View>
+
       </ScrollView>
 
       {/* ── Floating Action Button — Add Dispenser ─────────────────────────── */}
       {user?.role === "admin" && (
         <Pressable
           onPress={handleAddDispenser}
-          style={({ pressed }) => ({
-            position: "absolute",
-            bottom: 24,
-            right: 24,
-            backgroundColor: pressed ? "#0847A3" : "#4aa7ff",
-            transform: [{ scale: pressed ? 0.95 : 1 }],
-            borderRadius: 32,
-            flexDirection: "row",
-            alignItems: "center",
-            paddingVertical: 14,
-            paddingHorizontal: 20,
-            // Shadow — iOS
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 6,
-            // Shadow — Android
-            elevation: 8,
-          })}
+          style={({ pressed }) => [
+            styles.fab,
+            {
+              backgroundColor: pressed ? "#0847A3" : "#4aa7ff",
+              transform: [{ scale: pressed ? 0.95 : 1 }],
+            },
+          ]}
         >
-          <Text style={{ color: "#ffffff", fontSize: 22, lineHeight: 24, marginRight: 8 }}>＋</Text>
-          <Text style={{ color: "#ffffff", fontWeight: "700", fontSize: 15 }}>Add Dispenser</Text>
+          <Text style={styles.fabIcon}>＋</Text>
+          <Text style={styles.fabText}>Add Dispenser</Text>
         </Pressable>
       )}
       {/* ──────────────────────────────────────────────────────────────────── */}
@@ -284,7 +296,7 @@ export default function DashboardScreen() {
                   <View className="bg-surface rounded-2xl p-4 border border-border mb-3">
                     <View className="flex-row justify-between items-center mb-2">
                       <Text className="text-sm font-semibold text-foreground">Soap Level</Text>
-                      <Text className="text-lg font-bold text-primary">{selectedDispenser.soapLevel}%</Text>
+                      <Text className="text-lg font-bold text-white">{selectedDispenser.soapLevel}%</Text>
                     </View>
                     <View className="h-2 bg-border rounded-full overflow-hidden">
                       <View
@@ -298,7 +310,7 @@ export default function DashboardScreen() {
                   <View className="bg-surface rounded-2xl p-4 border border-border mb-3">
                     <View className="flex-row justify-between items-center mb-2">
                       <Text className="text-sm font-semibold text-foreground">Battery Level</Text>
-                      <Text className="text-lg font-bold text-primary">{selectedDispenser.batteryLevel}%</Text>
+                      <Text className="text-lg font-bold text-white">{selectedDispenser.batteryLevel}%</Text>
                     </View>
                     <View className="h-2 bg-border rounded-full overflow-hidden">
                       <View
@@ -359,3 +371,82 @@ export default function DashboardScreen() {
     </ScreenContainer>
   );
 }
+
+// ── Style sheet
+
+// ── Dispenser Interface ───────────────────────────────────────────────
+export interface Dispenser {
+  id: string;
+  name: string;
+  location: string;
+  floor: number;
+  soapLevel: number;
+  batteryLevel: number;
+  status: "ok" | "low" | "critical" | "offline";
+  lastRefill: string;
+  usageCount: number;
+  assignedTo: string[];
+}
+
+function getStatusColor(status: Dispenser["status"]): string {
+  switch (status) {
+    case "ok":       return "#10B981";
+    case "low":      return "#F59E0B";
+    case "critical": return "#DC2626";
+    case "offline":  return "#9CA3AF";
+    default:         return "#6B7280";
+  }
+}
+
+function getStatusLabel(status: Dispenser["status"]): string {
+  switch (status) {
+    case "ok":       return "OK";
+    case "low":      return "Low";
+    case "critical": return "Critical";
+    case "offline":  return "Offline";
+    default:         return "Unknown";
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    borderRadius: 32,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    // Shadow — iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    // Shadow — Android
+    elevation: 8,
+  },
+  fabIcon: {
+    color: "#ffffff",
+    fontSize: 22,
+    lineHeight: 24,
+    marginRight: 8,
+  },
+  fabText: {
+    color: "#ffffff",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+
+    // ── Progress Bar Fill Colors ──────────────────────────────────────────
+  soapBar: {
+    height: "100%",
+    backgroundColor: "#77bdfe", // ← change this to adjust soap bar color
+  },
+  batteryBar: {
+    height: "100%",
+    backgroundColor: "#10B981", // ← change this to adjust battery bar color
+  },
+});

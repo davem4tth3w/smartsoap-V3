@@ -157,8 +157,11 @@
 - [x] Test Firebase connection with proper error handling
 
 
-## Setup a dispenser feature
-- [ ] Admin can add a dispenser in dashboard
+## Dispensers
+- [x] Admin can add a dispenser in dashboard
+- [ ] Create functional CRUD feature for dispenser
 
 
-## Setup a WIFI Manager
+## WIFI Feature of ESP-32
+- [ ] Update the ESP-32 C++ codes with WifiManager feature
+- [ ] Test the WIFI connection of ESP-32

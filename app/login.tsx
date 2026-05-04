@@ -21,7 +21,7 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      await signIn(email, password);
+      await signIn(email, password);  
       router.replace("/(tabs)");
     } catch (error) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
