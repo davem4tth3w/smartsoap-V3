@@ -12,6 +12,7 @@ import {
   View,
   Alert,
 } from "react-native";
+import LottieView from "lottie-react-native";
 
 // 🔥 Firestore imports
 import { doc, setDoc } from "firebase/firestore";
@@ -20,6 +21,7 @@ import { db } from "../../../lib/firebase-config";
 export default function AddDispenserScreen() {
   const router = useRouter();
   const { deviceId } = useLocalSearchParams();
+  const [loading, setLoading] = useState(false);
 
   // ─── Form State ─────────────────────────────────────────
   const [name, setName] = useState("");
@@ -27,11 +29,27 @@ export default function AddDispenserScreen() {
   const [location, setLocation] = useState(""); 
   const [status] = useState("");
   const [soapLevel] = useState("");
+  const [errors, setErrors] = useState<{ name?: string; floor?: string; location?: string }>({});
 
   // ─── Submit Handler ─────────────────────────────────────
   const handleSubmit = async () => {
+    // ─── Validation ───────────────────────────────────────
+    const newErrors: { name?: string; floor?: string; location?: string } = {};
+    if (!name.trim()) newErrors.name = "Name is required.";
+    if (!floor.trim()) newErrors.floor = "Floor is required.";
+    if (!location.trim()) newErrors.location = "Location is required.";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
+    setLoading(true); //START LOADING
+
+    // ──────────────────────────────────────────────────────
+
     try {
-      // 🔐 1. AUTH CHECK (must be first)
+      // AUTH CHECK (must be first)
       const currentUser = auth.currentUser;
 
       if (!currentUser) {
@@ -39,17 +57,13 @@ export default function AddDispenserScreen() {
         return;
       }
 
-      // 🔐 2. ROLE CHECK (must happen before writing data)
+      // ROLE CHECK (must happen before writing data)
       const userSnap = await getDoc(doc(db, "users", currentUser.uid));
 
       if (!userSnap.exists() || userSnap.data().role !== "admin") {
         Alert.alert("Error", "Unauthorized action.");
         return;
       }
-
-      // ─────────────────────────────────────────────
-      // ✅ ONLY ADMIN USERS REACH THIS POINT
-      // ─────────────────────────────────────────────
 
       if (!deviceId) {
         Alert.alert("Error", "No device selected.");
@@ -86,6 +100,9 @@ export default function AddDispenserScreen() {
       console.error("❌ Error saving dispenser:", error);
       Alert.alert("Error", "Failed to save dispenser.");
     }
+    finally {
+    setLoading(false); //STOP LOADING (important!)
+  }
   };
   // ────────────────────────────────────────────────────────
 
@@ -105,7 +122,7 @@ export default function AddDispenserScreen() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </Pressable>
 
-          <Text style={styles.title}>Add dispenser</Text>
+          <Text style={styles.title}>Add Dispenser</Text>
         </View>
 
         <Text style={styles.label}>Dispenser ID</Text>
@@ -116,39 +133,60 @@ export default function AddDispenserScreen() {
           </Text>
         </View>
 
-        {/* Name */}
-        <Text style={styles.label}>Name</Text>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder="Main Hallway A"
-          style={styles.input}
-        />
+      {/* Name */}
+      <Text style={styles.label}>Name</Text>
+      <TextInput
+        value={name}
+        onChangeText={(v) => { setName(v); setErrors((e) => ({ ...e, name: undefined })); }}
+        placeholder="Example: Main Hallway A"
+        style={[styles.input, errors.name ? styles.inputError : null]}
+      />
+      {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
-        {/* Floor */}
-        <Text style={styles.label}>Floor</Text>
-        <TextInput
-          value={floor}
-          onChangeText={setFloor}
-          keyboardType="numeric"
-          placeholder="1"
-          style={styles.input}
-        />
+      {/* Floor */}
+      <Text style={styles.label}>Floor</Text>
+      <TextInput
+        value={floor}
+        onChangeText={(v) => { setFloor(v); setErrors((e) => ({ ...e, floor: undefined })); }}
+        keyboardType="numeric"
+        placeholder="Example: 1"
+        style={[styles.input, errors.floor ? styles.inputError : null]}
+      />
+      {errors.floor && <Text style={styles.errorText}>{errors.floor}</Text>}
 
-        {/* Location */}
-        <Text style={styles.label}>Location</Text>
-        <TextInput
-          value={location}
-          onChangeText={setLocation}
-          placeholder="Hallway A"
-          style={styles.input}
-        />
+      {/* Location */}
+      <Text style={styles.label}>Location</Text>
+      <TextInput
+        value={location}
+        onChangeText={(v) => { setLocation(v); setErrors((e) => ({ ...e, location: undefined })); }}
+        placeholder="Example: Hallway A"
+        style={[styles.input, errors.location ? styles.inputError : null]}
+      />
+      {errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
 
         {/* Submit Button */}
-        <Pressable style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Add Dispenser</Text>
+        <Pressable
+          style={[styles.button, loading && { opacity: 0.6 }]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? "Processing..." : "Add Dispenser"}
+          </Text>
         </Pressable>
       </ScrollView>
+
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <LottieView
+            source={require("../../../assets/Trail loading.json")}
+            autoPlay
+            loop
+            style={{ width: 150, height: 150 }}
+          />
+          <Text style={styles.loadingText}>Saving...</Text>
+        </View>
+      )}
     </>
   );
 }
@@ -226,5 +264,35 @@ backIcon: {
   color: "#FFFFFF",
   fontSize: 18,
   fontWeight: "600",
+},
+
+inputError: {
+  borderColor: "#EF4444",
+  borderWidth: 1.5,
+},
+
+errorText: {
+  color: "#EF4444",
+  fontSize: 12,
+  marginTop: 4,
+  marginLeft: 2,
+},
+
+loadingOverlay: {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0,0,0,0.6)",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 999,
+},
+
+loadingText: {
+  color: "#fff",
+  marginTop: 10,
+  fontSize: 14,
 },
 });

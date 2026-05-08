@@ -34,7 +34,6 @@ export default function DashboardScreen() {
             floor: typeof data.floor === "string" ? parseInt(data.floor, 10) : (data.floor ?? 0),
             status: data.status || "ok",
             soapLevel: data.soapLevel ?? 0,
-            batteryLevel: data.batteryLevel ?? 0,
             usageCount: data.usageCount ?? 0,
             lastRefill: data.lastRefill?.toDate?.()?.toISOString() ?? new Date().toISOString(),
             assignedTo: data.assignedTo ?? [],
@@ -86,7 +85,45 @@ export default function DashboardScreen() {
     nav.push("/dispenser/add/select-dispenser"); 
   };
 
-  const floors = Array.from(new Set(dispensers.map((d) => d.floor))).sort();
+
+  //Edit dispenser details handler
+  const handleEditDetails = () => {
+    if (!selectedDispenser) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    setIsModalVisible(false);
+
+    nav.push({
+      pathname: "/dispenser/edit/edit-details-form",
+      params: {
+        deviceId: selectedDispenser.id,
+        name: selectedDispenser.name,
+        floor: String(selectedDispenser.floor),
+        location: selectedDispenser.location,
+      },
+    });
+  };
+
+  //Unassign dispenser handler
+  const handleUnassignDispenser = () => {
+    if (!selectedDispenser) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    setIsModalVisible(false);
+
+    nav.push({
+      pathname: "/dispenser/unassign/unassign-form",
+      params: {
+        deviceId: selectedDispenser.id,
+        name: selectedDispenser.name,
+        floor: String(selectedDispenser.floor),
+        location: selectedDispenser.location,
+      },
+    });
+  };
+
 
   const renderDispenserCard = ({ item }: { item: Dispenser }) => (
     <Pressable
@@ -99,6 +136,7 @@ export default function DashboardScreen() {
         <View className="flex-1">
           <Text className="text-lg font-bold text-foreground">{item.name}</Text>
           <Text className="text-sm text-muted">{item.location}</Text>
+          <Text className="text-sm text-muted">Floor: {item.floor}</Text>
         </View>
         <View
           style={{ backgroundColor: getStatusColor(item.status) }}
@@ -121,16 +159,6 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Battery Level */}
-        <View className="flex-1 bg-primary bg-opacity-20 rounded-lg p-3 border border-primary border-opacity-30">
-          <Text className="text-xs text-muted font-semibold mb-1">BATTERY</Text>
-          <Text className="text-2xl font-bold text-white">{item.batteryLevel}%</Text>
-          <View className="h-1 bg-border rounded-full mt-2 overflow-hidden">
-            <View
-              style={[{ width: `${item.batteryLevel}%` }, styles.batteryBar]}
-            />
-          </View>
-        </View>
       </View>
 
       {/* Footer */}
@@ -154,44 +182,6 @@ export default function DashboardScreen() {
           <Text className="text-3xl font-bold text-foreground">Dashboard</Text>
           <Text className="text-sm text-muted">Real-time Dispenser Status</Text>
         </View>
-
-        {/* Floor Filter */}
-        {user?.role === "admin" && (
-          <View className="mb-4">
-            <Text className="text-sm font-semibold text-foreground mb-2">Filter by Floor</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-              <Pressable
-                onPress={() => {
-                  setSelectedFloor(null);
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
-                style={{
-                  backgroundColor: selectedFloor === null ? "#0A5BA8" : "rgba(10, 91, 168, 0.3)",
-                  borderColor: selectedFloor === null ? "#0A5BA8" : "#2D5A8C",
-                }}
-                className="px-6 py-2 rounded-full border"
-              >
-                <Text className="font-bold text-sm text-white">All</Text>
-              </Pressable>
-              {floors.map((floor) => (
-                <Pressable
-                  key={floor}
-                  onPress={() => {
-                    setSelectedFloor(floor);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                  style={{
-                    backgroundColor: selectedFloor === floor ? "#0A5BA8" : "rgba(10, 91, 168, 0.3)",
-                    borderColor: selectedFloor === floor ? "#0A5BA8" : "#2D5A8C",
-                  }}
-                  className="px-6 py-2 rounded-full border"
-                >
-                  <Text className="font-bold text-sm text-white">Floor {floor}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        )}
 
         {/* Status Summary */}
         <View className="flex-row gap-3 mb-6">
@@ -279,6 +269,7 @@ export default function DashboardScreen() {
                       {selectedDispenser.name}
                     </Text>
                     <Text className="text-sm text-muted mb-3">{selectedDispenser.location}</Text>
+                    <Text className="text-sm text-muted mb-3">Floor: {selectedDispenser.floor}</Text>
                     <View
                       style={{ backgroundColor: getStatusColor(selectedDispenser.status) }}
                       className="rounded-full px-3 py-1 self-start"
@@ -300,22 +291,7 @@ export default function DashboardScreen() {
                     </View>
                     <View className="h-2 bg-border rounded-full overflow-hidden">
                       <View
-                        style={{ width: `${selectedDispenser.soapLevel}%` }}
-                        className="h-full bg-primary"
-                      />
-                    </View>
-                  </View>
-
-                  {/* Battery Level */}
-                  <View className="bg-surface rounded-2xl p-4 border border-border mb-3">
-                    <View className="flex-row justify-between items-center mb-2">
-                      <Text className="text-sm font-semibold text-foreground">Battery Level</Text>
-                      <Text className="text-lg font-bold text-white">{selectedDispenser.batteryLevel}%</Text>
-                    </View>
-                    <View className="h-2 bg-border rounded-full overflow-hidden">
-                      <View
-                        style={{ width: `${selectedDispenser.batteryLevel}%` }}
-                        className="h-full bg-primary"
+                        style={[{ width: `${selectedDispenser.soapLevel}%` }, styles.soapBar]}
                       />
                     </View>
                   </View>
@@ -350,6 +326,34 @@ export default function DashboardScreen() {
                     <Text className="text-white font-bold text-lg">✓ Mark Refilled</Text>
                   </Pressable>
 
+                  {/* Edit details */}
+                  <Pressable
+                    onPress={handleEditDetails}
+                    style={({ pressed }) => [
+                      {
+                        backgroundColor: pressed ? "#4a4a4a" : "#737373",
+                        transform: [{ scale: pressed ? 0.97 : 1 }],
+                      },
+                    ]}
+                    className="rounded-xl py-4 items-center mb-3"
+                  >
+                    <Text className="text-white font-bold text-lg">Edit Details</Text>
+                  </Pressable>
+
+                  {/* Unassign Dispenser Button */}
+                  <Pressable
+                    onPress={handleUnassignDispenser}
+                    style={({ pressed }) => [
+                      {
+                        backgroundColor: pressed ? "#a21d1d" : "#b92f2f",
+                        transform: [{ scale: pressed ? 0.97 : 1 }],
+                      },
+                    ]}
+                    className="rounded-xl py-4 items-center mb-3"
+                  >
+                    <Text className="text-white font-bold text-lg">Unassign Dispenser</Text>
+                  </Pressable>
+
                   {/* Close Button */}
                   <Pressable
                     onPress={() => setIsModalVisible(false)}
@@ -358,7 +362,7 @@ export default function DashboardScreen() {
                         opacity: pressed ? 0.7 : 1,
                       },
                     ]}
-                    className="rounded-xl py-3 items-center border border-border"
+                    className="rounded-xl py-3 items-center border border-border mb-4"
                   >
                     <Text className="text-foreground font-semibold">Close</Text>
                   </Pressable>
@@ -381,7 +385,6 @@ export interface Dispenser {
   location: string;
   floor: number;
   soapLevel: number;
-  batteryLevel: number;
   status: "ok" | "low" | "critical" | "offline";
   lastRefill: string;
   usageCount: number;
@@ -444,9 +447,5 @@ const styles = StyleSheet.create({
   soapBar: {
     height: "100%",
     backgroundColor: "#77bdfe", // ← change this to adjust soap bar color
-  },
-  batteryBar: {
-    height: "100%",
-    backgroundColor: "#10B981", // ← change this to adjust battery bar color
-  },
+  }
 });

@@ -19,12 +19,12 @@ export function useAuth(_options?: UseAuthOptions) {
     loading: isLoading,
     isAuthenticated: isSignedIn,
 
-    // 🔁 Map old names → Firebase functions
+    //Map old names → Firebase functions
     login: signIn,
     signup: signUp,
     logout: signOut,
 
-    // 🧹 No longer needed but kept so nothing breaks
+    //No longer needed but kept so nothing breaks
     refresh: async () => {},
     error: null,
   };
