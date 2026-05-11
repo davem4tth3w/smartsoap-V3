@@ -20,7 +20,7 @@ export default function UnassignDispenserScreen() {
   const router = useRouter();
 
   const {
-    deviceId,
+    dispenserID,
     name: initialName,
     floor: initialFloor,
     location: initialLocation,
@@ -67,13 +67,13 @@ export default function UnassignDispenserScreen() {
             return;
             }
 
-            if (!deviceId || typeof deviceId !== "string") {
+            if (!dispenserID || typeof dispenserID !== "string") {
             Alert.alert("Error", "Invalid dispenser ID.");
             return;
             }
 
             // UPDATE FIRESTORE
-            await updateDoc(doc(db, "dispensers", deviceId), {
+            await updateDoc(doc(db, "dispensers", dispenserID), {
             assignmentStatus: "unassigned",
 
             // Clear assignment details
@@ -92,7 +92,7 @@ export default function UnassignDispenserScreen() {
             router.replace({
             pathname: "/dispenser/unassign/unassign-success",
             params: {
-                deviceId,
+                dispenserID,
             },
             });
 
@@ -130,7 +130,7 @@ export default function UnassignDispenserScreen() {
 
         <View style={styles.idBox}>
           <Text style={styles.idText}>
-            {deviceId ? deviceId : "No ID selected"}
+            {dispenserID ? dispenserID : "No ID selected"}
           </Text>
         </View>
 
@@ -220,6 +220,7 @@ const styles = StyleSheet.create({
     },
 
     headerTop: {
+    marginTop: 10,
     flexDirection: "row",
     alignItems: "center",
     },

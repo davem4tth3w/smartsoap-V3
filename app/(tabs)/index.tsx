@@ -79,10 +79,10 @@ export default function DashboardScreen() {
 
   const nav = useRouter();
 
-  // Add Dispenser handler
-  const handleAddDispenser = () => {
+  // Assign Dispenser handler
+  const handleAssignDispenser = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    nav.push("/dispenser/add/select-dispenser"); 
+    nav.push("/dispenser/assign/select-dispenser"); 
   };
 
 
@@ -97,7 +97,7 @@ export default function DashboardScreen() {
     nav.push({
       pathname: "/dispenser/edit/edit-details-form",
       params: {
-        deviceId: selectedDispenser.id,
+        dispenserID: selectedDispenser.id,
         name: selectedDispenser.name,
         floor: String(selectedDispenser.floor),
         location: selectedDispenser.location,
@@ -116,14 +116,13 @@ export default function DashboardScreen() {
     nav.push({
       pathname: "/dispenser/unassign/unassign-form",
       params: {
-        deviceId: selectedDispenser.id,
+        dispenserID: selectedDispenser.id,
         name: selectedDispenser.name,
         floor: String(selectedDispenser.floor),
         location: selectedDispenser.location,
       },
     });
   };
-
 
   const renderDispenserCard = ({ item }: { item: Dispenser }) => (
     <Pressable
@@ -132,17 +131,30 @@ export default function DashboardScreen() {
       className="bg-surface rounded-2xl p-4 mb-3 border border-border"
     >
       {/* Header */}
-      <View className="flex-row justify-between items-start mb-3">
-        <View className="flex-1">
-          <Text className="text-lg font-bold text-foreground">{item.name}</Text>
-          <Text className="text-sm text-muted">{item.location}</Text>
-          <Text className="text-sm text-muted">Floor: {item.floor}</Text>
+      <View className="mb-3">
+        {/* ID - Top Middle */}
+        <View className="items-center mb-2">
+          <Text className="text-sm text-muted font-semibold">{item.id}</Text>
         </View>
-        <View
-          style={{ backgroundColor: getStatusColor(item.status) }}
-          className="rounded-full px-3 py-1"
-        >
-          <Text className="text-white text-xs font-bold">{getStatusLabel(item.status)}</Text>
+
+        {/* Name + Status */}
+        <View className="flex-row justify-between items-start">
+          <View className="flex-1">
+            <Text className="text-lg font-bold text-foreground">{item.name}</Text>
+            <Text className="text-sm text-muted">{item.location}</Text>
+            <Text className="text-sm text-muted">
+              Floor: {item.floor}
+            </Text>
+          </View>
+
+          <View
+            style={{ backgroundColor: getStatusColor(item.status) }}
+            className="rounded-full px-3 py-1"
+          >
+            <Text className="text-white text-xs font-bold">
+              {getStatusLabel(item.status)}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -151,20 +163,28 @@ export default function DashboardScreen() {
         {/* Soap Level */}
         <View className="flex-1 bg-primary bg-opacity-20 rounded-lg p-3 border border-primary border-opacity-30">
           <Text className="text-xs text-muted font-semibold mb-1">SOAP</Text>
-          <Text className="text-2xl font-bold text-white">{item.soapLevel}%</Text>
+
+          <Text className="text-2xl font-bold text-white">
+            {item.soapLevel}%
+          </Text>
+
           <View className="h-1 bg-border rounded-full mt-2 overflow-hidden">
             <View
               style={[{ width: `${item.soapLevel}%` }, styles.soapBar]}
             />
           </View>
         </View>
-
       </View>
 
       {/* Footer */}
       <View className="flex-row justify-between items-center pt-3 border-t border-border">
-        <Text className="text-xs text-muted">Usage: {item.usageCount} times</Text>
-        <Text className="text-xs text-muted">Tap for details</Text>
+        <Text className="text-xs text-muted">
+          Usage: {item.usageCount} times
+        </Text>
+
+        <Text className="text-xs text-muted">
+          Tap for details
+        </Text>
       </View>
     </Pressable>
   );
@@ -225,10 +245,10 @@ export default function DashboardScreen() {
 
       </ScrollView>
 
-      {/* ── Floating Action Button — Add Dispenser ─────────────────────────── */}
+      {/* ── Floating Action Button — Assign Dispenser ─────────────────────────── */}
       {user?.role === "admin" && (
         <Pressable
-          onPress={handleAddDispenser}
+          onPress={handleAssignDispenser}
           style={({ pressed }) => [
             styles.fab,
             {
@@ -238,7 +258,7 @@ export default function DashboardScreen() {
           ]}
         >
           <Text style={styles.fabIcon}>＋</Text>
-          <Text style={styles.fabText}>Add Dispenser</Text>
+          <Text style={styles.fabText}>Assign Dispenser</Text>
         </Pressable>
       )}
       {/* ──────────────────────────────────────────────────────────────────── */}
@@ -265,18 +285,38 @@ export default function DashboardScreen() {
                 <>
                   {/* Dispenser Name & Location */}
                   <View className="bg-surface rounded-2xl p-4 border border-border mb-4">
-                    <Text className="text-xl font-bold text-foreground mb-1">
-                      {selectedDispenser.name}
-                    </Text>
-                    <Text className="text-sm text-muted mb-3">{selectedDispenser.location}</Text>
-                    <Text className="text-sm text-muted mb-3">Floor: {selectedDispenser.floor}</Text>
-                    <View
-                      style={{ backgroundColor: getStatusColor(selectedDispenser.status) }}
-                      className="rounded-full px-3 py-1 self-start"
-                    >
-                      <Text className="text-white text-xs font-bold">
-                        {getStatusLabel(selectedDispenser.status)}
+                    
+                    {/* ID - Top Middle */}
+                    <View className="items-center mb-2">
+                      <Text className="text-sm text-muted font-semibold">
+                        {selectedDispenser.id}
                       </Text>
+                    </View>
+
+                    {/* Name + Status */}
+                    <View className="flex-row justify-between items-start">
+                      <View className="flex-1">
+                        <Text className="text-xl font-bold text-foreground mb-1">
+                          {selectedDispenser.name}
+                        </Text>
+
+                        <Text className="text-sm text-muted">
+                          {selectedDispenser.location}
+                        </Text>
+
+                        <Text className="text-sm text-muted">
+                          Floor: {selectedDispenser.floor}
+                        </Text>
+                      </View>
+
+                      <View
+                        style={{ backgroundColor: getStatusColor(selectedDispenser.status) }}
+                        className="rounded-full px-3 py-1 ml-3"
+                      >
+                        <Text className="text-white text-xs font-bold">
+                          {getStatusLabel(selectedDispenser.status)}
+                        </Text>
+                      </View>
                     </View>
                   </View>
 
@@ -410,7 +450,7 @@ function getStatusLabel(status: Dispenser["status"]): string {
     default:         return "Unknown";
   }
 }
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
 

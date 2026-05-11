@@ -79,7 +79,6 @@ When you first open the app, it will:
 ✅ **Real-time Monitoring** - Live dispenser status updates
 ✅ **Role-based Access** - Admin vs Maintenance permissions
 ✅ **Alert Thresholds** - Editable by admin users
-✅ **Building Floor Map** - 3-floor layout with dispensers
 ✅ **Analytics** - Shift-based usage statistics
 ✅ **History** - Event logging and filtering
 

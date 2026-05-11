@@ -11,10 +11,9 @@ A role-based mobile app for monitoring and managing soap dispenser usage and mai
 1. **Login Screen** — Email + password authentication with role detection
 2. **Sign Up Screen** — Registration with role-specific fields (Employee ID and Shift for Maintenance users)
 3. **Dashboard** — Real-time overview of all dispensers with color-coded status indicators
-4. **Map Screen** — Building floor map showing dispenser locations with status pins; filterable by floor
-5. **Analytics Screen** — Shift-scoped analytics for Maintenance users; full overview for Admin
-6. **History Screen** — Log of all events (refills, alerts, offline notices) with type and date filters
-7. **Settings Screen** — Notification toggles, threshold settings (Admin only), user management (Admin only), sign out
+4. **Analytics Screen** — Shift-scoped analytics for Maintenance users; full overview for Admin
+5. **History Screen** — Log of all events (refills, alerts, offline notices) with type and date filters
+6. **Settings Screen** — Notification toggles, threshold settings (Admin only), user management (Admin only), sign out
 
 ---
 
@@ -43,16 +42,6 @@ A role-based mobile app for monitoring and managing soap dispenser usage and mai
   - Filter by floor/location (Admin only)
 - **Maintenance View:** Only shows assigned dispensers
 
-### Map Screen
-- **Content:**
-  - Building floor map with dispenser location pins
-  - Floor selector (Floor 1, Floor 2, etc.)
-  - Status legend (Red/Yellow/Green indicators)
-- **Functionality:**
-  - Tap pin to view dispenser details
-  - Filter by floor
-  - Show/hide offline devices
-- **Maintenance View:** Only shows assigned dispensers
 
 ### Analytics Screen
 - **Content:**
@@ -97,17 +86,15 @@ A role-based mobile app for monitoring and managing soap dispenser usage and mai
 1. **Login** → Enter email/password → Dashboard
 2. **Dashboard** → View all dispensers → Tap dispenser → See detailed status, refill history, battery info
 3. **Analytics** → View building-wide trends, refill patterns, battery health
-4. **Map** → View all dispenser locations, filter by floor
-5. **History** → View all events across all dispensers
-6. **Settings** → Adjust thresholds, manage Maintenance users, toggle notifications
+4. **History** → View all events across all dispensers
+5. **Settings** → Adjust thresholds, manage Maintenance users, toggle notifications
 
 ### Maintenance User Flow
 1. **Sign Up** → Enter name, email, password, Employee ID, select shift → Dashboard
 2. **Dashboard** → View only assigned dispensers for their shift
 3. **Analytics** → View only their shift's refill/usage stats
-4. **Map** → View only assigned dispenser locations
-5. **History** → View only events for assigned dispensers
-6. **Settings** → Toggle personal notifications, view account info, sign out
+4. **History** → View only events for assigned dispensers
+5. **Settings** → Toggle personal notifications, view account info, sign out
 
 ### Refill Alert Flow
 1. Dispenser soap level drops below threshold
@@ -144,12 +131,11 @@ A role-based mobile app for monitoring and managing soap dispenser usage and mai
 
 ## Navigation Structure
 
-**Bottom Tab Bar (5 tabs):**
+**Bottom Tab Bar (4 tabs):**
 1. Dashboard (home icon)
-2. Map (map icon)
-3. Analytics (chart icon)
-4. History (history/clock icon)
-5. Settings (gear icon)
+2. Analytics (chart icon)
+3. History (history/clock icon)
+4. Settings (gear icon)
 
 ---
 
@@ -232,8 +218,7 @@ A role-based mobile app for monitoring and managing soap dispenser usage and mai
 3. Update theme.config.js with blue gradient colors
 4. Build authentication screens (Login, Sign Up)
 5. Build Dashboard with real-time dispenser cards
-6. Build Map screen with floor filtering
-7. Build Analytics and History screens
-8. Build Settings screen with role-based controls
-9. Integrate navigation and polish UI
-10. Test end-to-end flows and deliver
+6. Build Analytics and History screens
+7. Build Settings screen with role-based controls
+8. Integrate navigation and polish UI
+9. Test end-to-end flows and deliver

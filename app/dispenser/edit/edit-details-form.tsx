@@ -20,7 +20,7 @@ export default function EditDispenserScreen() {
   const router = useRouter();
 
   const {
-    deviceId,
+    dispenserID,
     name: initialName,
     floor: initialFloor,
     location: initialLocation,
@@ -83,13 +83,13 @@ export default function EditDispenserScreen() {
         return;
       }
 
-      if (!deviceId || typeof deviceId !== "string") {
+      if (!dispenserID || typeof dispenserID !== "string") {
         Alert.alert("Error", "Invalid dispenser ID.");
         return;
       }
 
       // UPDATE FIRESTORE
-      await updateDoc(doc(db, "dispensers", deviceId), {
+      await updateDoc(doc(db, "dispensers", dispenserID), {
         name,
         floor,
         location,
@@ -100,7 +100,7 @@ export default function EditDispenserScreen() {
       router.replace({
         pathname: "/dispenser/edit/edit-success",
         params: {
-          deviceId,
+          dispenserID,
           name,
           floor,
           location,
@@ -139,7 +139,7 @@ export default function EditDispenserScreen() {
 
         <View style={styles.idBox}>
           <Text style={styles.idText}>
-            {deviceId ? deviceId : "No ID selected"}
+            {dispenserID ? dispenserID : "No ID selected"}
           </Text>
         </View>
 

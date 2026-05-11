@@ -121,7 +121,6 @@ events/{eventId}
 
 The app uses Firestore real-time listeners for:
 - **Dashboard:** Live dispenser status updates
-- **Map:** Real-time location and status visualization
 - **Analytics:** Live usage statistics
 - **History:** Event log updates
 

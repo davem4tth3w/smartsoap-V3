@@ -16,15 +16,6 @@
 - [x] Filter by floor/location (Admin only)
 - [x] Maintenance users see only assigned dispensers
 
-## Map Screen
-- [x] Render building floor map with dispenser location pins
-- [x] Floor selector/tabs (Floor 1, Floor 2, etc.)
-- [x] Status legend (Red/Yellow/Green)
-- [x] Tap pin to view dispenser details
-- [x] Filter by floor
-- [x] Show/hide offline devices toggle
-- [x] Maintenance users see only assigned dispensers
-
 ## Analytics Screen
 - [x] Display shift-based graphs for Maintenance users
 - [x] Display full building overview for Admin users
@@ -56,7 +47,7 @@
 - [x] Sign out button
 
 ## Navigation & Theming
-- [x] Configure bottom tab bar with 5 tabs (Dashboard, Map, Analytics, History, Settings)
+- [x] Configure bottom tab bar with 5 tabs (Dashboard, Analytics, History, Settings)
 - [x] Add tab icons to icon-symbol.tsx
 - [x] Update theme.config.js with deep navy-to-blue gradient
 - [x] Implement blue primary color (#0A5BA8)
@@ -107,7 +98,6 @@
 - [x] Update Login screen background and card colors
 - [x] Update Sign Up screen background and card colors
 - [x] Update Dashboard screen card colors
-- [x] Update Map screen card colors
 - [x] Update Analytics screen card colors
 - [x] Update History screen card colors
 - [x] Update Settings screen card colors

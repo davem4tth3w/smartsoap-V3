@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 export default function SuccessScreen() {
   const router = useRouter();
-  const { deviceId, name, floor, location } = useLocalSearchParams();
+  const { dispenserID, name, floor, location } = useLocalSearchParams();
 
   return (
     <>
@@ -22,8 +22,8 @@ export default function SuccessScreen() {
         {/* Card */}
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.label}>Device ID</Text>
-            <Text style={styles.value}>{deviceId}</Text>
+            <Text style={styles.label}>Dispenser ID</Text>
+            <Text style={styles.value}>{dispenserID}</Text>
           </View>
 
           <View style={styles.row}>
