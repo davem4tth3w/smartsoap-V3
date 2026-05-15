@@ -43,7 +43,6 @@ password: maint123
 role: maintenance
 fullName: John Maintenance
 employeeId: EMP001
-shiftAssignment: Morning
 createdAt: (click timestamp, set to today)
 ```
 

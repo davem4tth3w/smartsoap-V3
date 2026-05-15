@@ -17,7 +17,6 @@ export interface UserData {
   role: UserRole;
   fullName: string;
   employeeId?: string;
-  shiftAssignment?: "Morning" | "Afternoon" | "Evening";
   createdAt: Date;
 }
 
@@ -89,7 +88,6 @@ const signUp = async (email: string, password: string, userData: Partial<UserDat
           role: userData.role || "maintenance",
           fullName: userData.fullName || "",
           employeeId: userData.employeeId || "",
-          shiftAssignment: userData.shiftAssignment || "Morning",
           createdAt: new Date(),
         }),
       3,
@@ -102,7 +100,6 @@ const signUp = async (email: string, password: string, userData: Partial<UserDat
       role: (userData.role || "maintenance") as UserRole,
       fullName: userData.fullName || "",
       employeeId: userData.employeeId,
-      shiftAssignment: userData.shiftAssignment as any,
       createdAt: new Date(),
     });
 

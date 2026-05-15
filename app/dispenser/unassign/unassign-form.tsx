@@ -110,7 +110,7 @@ export default function UnassignDispenserScreen() {
 
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: 40 }}
+
       >
         <View style={styles.header}>
             <View style={styles.headerTop}>

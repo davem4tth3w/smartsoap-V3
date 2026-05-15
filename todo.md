@@ -3,7 +3,6 @@
 ## Authentication & Setup
 - [x] Login screen with email/password validation
 - [x] Sign Up screen with role selection (Admin/Maintenance)
-- [x] Maintenance-specific fields (Employee ID, Shift Assignment)
 - [x] Auth state persistence with AsyncStorage
 - [x] Role-based navigation routing
 
@@ -17,9 +16,7 @@
 - [x] Maintenance users see only assigned dispensers
 
 ## Analytics Screen
-- [x] Display shift-based graphs for Maintenance users
 - [x] Display full building overview for Admin users
-- [x] Show metrics: refills per shift, average soap usage, battery trends
 - [x] Date range selector
 - [x] Drill-down functionality for chart details
 - [ ] Export data option (optional)
@@ -60,7 +57,6 @@
 - [x] Create mock user data (Admin and Maintenance roles)
 - [x] Create mock event history
 - [x] Test role-based access control
-- [x] Test shift-based filtering for Maintenance users
 - [x] Test all navigation flows
 
 ## UI Polish & Refinement

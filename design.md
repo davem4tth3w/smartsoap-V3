@@ -2,18 +2,17 @@
 
 ## Overview
 
-A role-based mobile app for monitoring and managing soap dispenser usage and maintenance across a school building. The app provides real-time dispenser status, shift-based analytics, and maintenance alerts with a deep navy-to-blue theme aligned with iOS Human Interface Guidelines.
+A role-based mobile app for monitoring and managing soap dispenser usage and maintenance across a school building. The app provides real-time dispenser status, analytics, and maintenance alerts with a deep navy-to-blue theme aligned with iOS Human Interface Guidelines.
 
 ---
 
 ## Screen List
 
 1. **Login Screen** — Email + password authentication with role detection
-2. **Sign Up Screen** — Registration with role-specific fields (Employee ID and Shift for Maintenance users)
+2. **Sign Up Screen** — Registration
 3. **Dashboard** — Real-time overview of all dispensers with color-coded status indicators
-4. **Analytics Screen** — Shift-scoped analytics for Maintenance users; full overview for Admin
-5. **History Screen** — Log of all events (refills, alerts, offline notices) with type and date filters
-6. **Settings Screen** — Notification toggles, threshold settings (Admin only), user management (Admin only), sign out
+4. **History Screen** — Log of all events (refills, alerts, offline notices) with type and date filters
+5. **Settings Screen** — Notification toggles, threshold settings (Admin only), user management (Admin only), sign out
 
 ---
 
@@ -26,7 +25,6 @@ A role-based mobile app for monitoring and managing soap dispenser usage and mai
 
 ### Sign Up Screen
 - **Content:** Full name, email, password, password confirmation fields
-- **Conditional Fields (Maintenance only):** Employee ID, Shift Assignment dropdown (Morning / Afternoon / Evening)
 - **Functionality:** Register new user, store role preference, navigate to Dashboard after signup
 - **Validation:** Email uniqueness, password strength, Employee ID format
 
@@ -45,14 +43,13 @@ A role-based mobile app for monitoring and managing soap dispenser usage and mai
 
 ### Analytics Screen
 - **Content:**
-  - Shift-based graphs and statistics (Maintenance users)
   - Full building overview (Admin users)
-  - Metrics: refills per shift, average soap usage, battery health trends
+  - Metrics: refills, average soap usage, battery health trends
 - **Functionality:**
   - Date range selector
   - Export data (optional)
   - Tap chart to drill down into details
-- **Maintenance View:** Only their shift data
+
 
 ### History Screen
 - **Content:**
@@ -90,11 +87,9 @@ A role-based mobile app for monitoring and managing soap dispenser usage and mai
 5. **Settings** → Adjust thresholds, manage Maintenance users, toggle notifications
 
 ### Maintenance User Flow
-1. **Sign Up** → Enter name, email, password, Employee ID, select shift → Dashboard
-2. **Dashboard** → View only assigned dispensers for their shift
-3. **Analytics** → View only their shift's refill/usage stats
-4. **History** → View only events for assigned dispensers
-5. **Settings** → Toggle personal notifications, view account info, sign out
+1. **Sign Up** → Enter name, email, password, Employee ID, select → Dashboard
+2. **History** → View only events for assigned dispensers
+3. **Settings** → Toggle personal notifications, view account info, sign out
 
 ### Refill Alert Flow
 1. Dispenser soap level drops below threshold
@@ -189,7 +184,6 @@ A role-based mobile app for monitoring and managing soap dispenser usage and mai
 - `email` — email address
 - `role` — "admin" | "maintenance"
 - `employeeId` — (Maintenance only) employee ID
-- `shift` — (Maintenance only) "morning" | "afternoon" | "evening"
 - `assignedDispensers` — (Maintenance only) array of dispenser IDs
 
 ### Event

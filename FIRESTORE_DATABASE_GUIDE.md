@@ -61,7 +61,6 @@ After the database is created, you'll see an empty Firestore page.
 | role | string | maintenance |
 | fullName | string | John Maintenance |
 | employeeId | string | EMP001 |
-| shiftAssignment | string | Morning |
 | createdAt | timestamp | (current date/time) |
 
 4. Click **Save**
@@ -86,7 +85,6 @@ Firestore Database
         ├── role: "maintenance"
         ├── fullName: "John Maintenance"
         ├── employeeId: "EMP001"
-        ├── shiftAssignment: "Morning"
         └── createdAt: 2026-04-25
 ```
 
@@ -132,7 +130,6 @@ Now your app can:
 | **fullName** | User's display name | Admin User |
 | **createdAt** | When user was created | 2026-04-25 |
 | **employeeId** | (Optional) Employee ID | EMP001 |
-| **shiftAssignment** | (Optional) Work shift | Morning, Afternoon, Evening |
 
 ## How the App Uses This Data
 

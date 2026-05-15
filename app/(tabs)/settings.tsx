@@ -1,37 +1,38 @@
-import { initializeApp } from "firebase/app";
 import { useState, useEffect } from "react";
 import { ScrollView, Text, View, Pressable, Switch, Alert, TextInput, Modal, FlatList } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useFirebaseAuth } from "@/lib/firebase-auth-context";
-import { doc, setDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase-config";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
+import {
+  doc,
+  setDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  getDoc,
+  updateDoc,
+} from "firebase/firestore";
 
 export default function SettingsScreen() {
   const { user, signOut } = useFirebaseAuth();
   const router = useRouter();
 
-  // Notification preferences
-  const [notifications, setNotifications] = useState({
-    criticalRefill: true,
-    lowSoap: true,
-    lowBattery: true,
-    offlineDevice: true,
-    unusualActivity: false,
-  });
-
   // Thresholds (Admin only)
   const [thresholds, setThresholds] = useState({
-    soapLevel: 25,
-    batteryLevel: 15,
-    criticalSoapLevel: 10,
-    criticalBatteryLevel: 5,
+    soapLevel: 0,
+    criticalSoapLevel: 0,
   });
 
+  //fetch thresholds on load
+  useEffect(() => {
+  fetchThresholds();
+  }, []);
+
   // User management
-  const [allUsers, setAllUsers] = useState<any[]>([]);
+
   const [isAddUserModalVisible, setIsAddUserModalVisible] = useState(false);
   const [isEditThresholdModalVisible, setIsEditThresholdModalVisible] = useState(false);
   const [selectedThresholdKey, setSelectedThresholdKey] = useState<keyof typeof thresholds | null>(null);
@@ -41,33 +42,9 @@ export default function SettingsScreen() {
     email: "",
     password: "",
     role: "maintenance" as "admin" | "maintenance",
-    employeeId: "",
-    shift: "morning" as "morning" | "afternoon" | "evening",
+    employeeId: ""
   });
 
-  //Handle default users
-  const defaultUsers = allUsers.filter((u) =>
-    u.defaultAdmin === true || u.defaultMaintenance === true || u.defaultMaintenance === "true"
-  );
-
-  const normalUsers = allUsers.filter((u) =>
-    !(u.defaultAdmin === true || u.defaultMaintenance === true || u.defaultMaintenance === "true")
-  );
-    
-
-  // Load all users
-  useEffect(() => {
-    const loadUsers = async () => {
-      const snapshot = await getDocs(collection(db, "users"));
-      const users = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setAllUsers(users);
-    };
-
-    loadUsers();
-  }, []);
 
   const handleLogout = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -84,62 +61,48 @@ export default function SettingsScreen() {
     ]);
   };
 
-const handleAddUser = async () => {
-  if (!newUserData.email || !newUserData.password) {
-    Alert.alert("Error", "Missing fields");
-    return;
-  }
 
-  const currentAdmin = auth.currentUser;
 
-  if (!currentAdmin) {
-    Alert.alert("Error", "Admin session not found");
+  const fetchThresholds = async () => {
+    try {
+      const thresholdRef = doc(db, "thresholds", "global");
+      const thresholdSnap = await getDoc(thresholdRef);
+
+      if (thresholdSnap.exists()) {
+        const data = thresholdSnap.data();
+
+        setThresholds({
+          soapLevel: data.lowSoapLevel ?? 0,
+          criticalSoapLevel: data.criticalSoapLevel ?? 0,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching thresholds:", error);
+    }
+  };
+
+
+  const handleUpdateThreshold = async () => {
+  if (!thresholdValue || selectedThresholdKey === null) return;
+
+  const newValue = parseInt(thresholdValue);
+
+  if (isNaN(newValue) || newValue < 0 || newValue > 100) {
+    Alert.alert("Error", "Please enter a valid number between 0 and 100");
     return;
   }
 
   try {
-    // Create user (this may temporarily switch auth state internally)
-    const cred = await createUserWithEmailAndPassword(
-      auth,
-      newUserData.email,
-      newUserData.password
-    );
+    const thresholdRef = doc(db, "thresholds", "global");
 
-    const uid = cred.user.uid;
+    const firestoreField =
+      selectedThresholdKey === "soapLevel"
+        ? "lowSoapLevel"
+        : "criticalSoapLevel";
 
-    await setDoc(doc(db, "users", uid), {
-      name: newUserData.name,
-      email: newUserData.email,
-      role: newUserData.role,
-      employeeId: newUserData.employeeId || null,
-      shift: newUserData.shift || null,
+    await updateDoc(thresholdRef, {
+      [firestoreField]: newValue,
     });
-
-    // 🔥 CRITICAL FIX: immediately restore admin session
-    await auth.updateCurrentUser(currentAdmin);
-
-    setIsAddUserModalVisible(false);
-
-    Alert.alert("Success", "User created successfully");
-
-  } catch (e) {
-    console.error(e);
-    Alert.alert("Error", "Failed to create user");
-  }
-};
-
-const handleDeleteUser = async (id: string) => {
-  await deleteDoc(doc(db, "users", id));
-};
-
-  const handleUpdateThreshold = async () => {
-    if (!thresholdValue || selectedThresholdKey === null) return;
-
-    const newValue = parseInt(thresholdValue);
-    if (isNaN(newValue) || newValue < 0 || newValue > 100) {
-      Alert.alert("Error", "Please enter a valid number between 0 and 100");
-      return;
-    }
 
     setThresholds((prev) => ({
       ...prev,
@@ -149,23 +112,15 @@ const handleDeleteUser = async (id: string) => {
     setIsEditThresholdModalVisible(false);
     setThresholdValue("");
     setSelectedThresholdKey(null);
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  };
 
-  const toggleNotification = (key: keyof typeof notifications) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await Haptics.notificationAsync(
+      Haptics.NotificationFeedbackType.Success
+    );
+  } catch (error) {
+    console.error("Error updating threshold:", error);
+    Alert.alert("Error", "Failed to update threshold");
+  }
   };
-
-  const renderSettingRow = (label: string, value: boolean, onToggle: () => void) => (
-    <View className="flex-row justify-between items-center py-3 border-b border-border">
-      <Text className="text-sm text-foreground">{label}</Text>
-      <Switch value={value} onValueChange={onToggle} />
-    </View>
-  );
 
   const renderThresholdRow = (label: string, key: keyof typeof thresholds) => (
     <Pressable
@@ -212,32 +167,6 @@ const handleDeleteUser = async (id: string) => {
           </View>
         </View>
 
-        {/* Notifications Section */}
-        <View className="bg-surface rounded-2xl p-4 border border-border mb-6">
-          <Text className="text-sm font-bold text-foreground mb-4">Push Notifications</Text>
-          {renderSettingRow(
-            "Critical Refill Alert",
-            notifications.criticalRefill,
-            () => toggleNotification("criticalRefill")
-          )}
-          {renderSettingRow("Low Soap", notifications.lowSoap, () => toggleNotification("lowSoap"))}
-          {renderSettingRow(
-            "Low Battery",
-            notifications.lowBattery,
-            () => toggleNotification("lowBattery")
-          )}
-          {renderSettingRow(
-            "Offline Device",
-            notifications.offlineDevice,
-            () => toggleNotification("offlineDevice")
-          )}
-          {renderSettingRow(
-            "Unusual Activity",
-            notifications.unusualActivity,
-            () => toggleNotification("unusualActivity")
-          )}
-        </View>
-
         {/* Admin-only: Thresholds Section */}
         {user?.role === "admin" && (
           <View className="bg-surface rounded-2xl p-4 border border-border mb-6">
@@ -245,84 +174,25 @@ const handleDeleteUser = async (id: string) => {
             <Text className="text-xs text-muted mb-3">Tap to edit threshold values</Text>
             {renderThresholdRow("Low Soap Level", "soapLevel")}
             {renderThresholdRow("Critical Soap Level", "criticalSoapLevel")}
-            {renderThresholdRow("Low Battery Level", "batteryLevel")}
-            {renderThresholdRow("Critical Battery Level", "criticalBatteryLevel")}
           </View>
         )}
 
-        {/* Admin-only: User Management Section */}
+        {/* Admin-only: Manage Users Navigation */}
         {user?.role === "admin" && (
           <View className="bg-surface rounded-2xl p-4 border border-border mb-6">
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-sm font-bold text-foreground">Manage Users</Text>
-              <Pressable
-                onPress={() => setIsAddUserModalVisible(true)}
-                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                className="bg-primary rounded-lg px-3 py-1"
-              >
-                <Text className="text-white text-xs font-bold">+ Add User</Text>
-              </Pressable>
-            </View>
-              {/* Default Accounts (Pinned) */}
-              {defaultUsers.length > 0 && (
-                <View className="mb-4">
-                  <Text className="text-xs font-bold text-muted mb-2">
-                    Default Accounts
-                  </Text>
+            <Text className="text-sm font-bold text-foreground mb-4">
+              User Management
+            </Text>
 
-                  {defaultUsers.map((u) => (
-                    <View
-                      key={u.id}
-                      className="flex-row justify-between items-center py-3 border-b border-border opacity-80"
-                    >
-                      <View className="flex-1">
-                        <Text className="text-sm font-semibold text-foreground">
-                          {u.name} (Default)
-                        </Text>
-                        <Text className="text-xs text-muted">{u.email}</Text>
-                      </View>
-
-                      <View className="bg-primary px-2 py-1 rounded-lg">
-                        <Text className="text-white text-xs font-bold capitalize">
-                          {u.role}
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {/* Regular Users */}
-              {normalUsers.map((u) => (
-                <View
-                  key={u.id}
-                  className="flex-row justify-between items-center py-3 border-b border-border"
-                >
-                  <View className="flex-1">
-                    <Text className="text-sm font-semibold text-foreground">{u.name}</Text>
-                    <Text className="text-xs text-muted">{u.email}</Text>
-                  </View>
-
-                  <View className="flex-row gap-2">
-                    <Pressable
-                      onPress={() => Alert.alert("Edit", `Edit user: ${u.name}`)}
-                      className="bg-primary bg-opacity-30 rounded-lg px-2 py-1 border border-primary border-opacity-50"
-                    >
-                      <Text className="text-xs font-bold text-white">Edit</Text>
-                    </Pressable>
-
-                    {/* Prevent deleting default accounts */}
-                    <Pressable
-                      onPress={() => handleDeleteUser(u.id)}
-                      disabled={u.defaultAdmin === true || u.defaultMaintenance === true}
-                      className="bg-error bg-opacity-30 rounded-lg px-2 py-1 border border-error border-opacity-50"
-                    >
-                      <Text className="text-xs font-bold text-white">Delete</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              ))}
-
+            <Pressable
+              onPress={() => router.push("/users/manage_users")}
+              style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+              className="bg-primary rounded-xl py-4 items-center"
+            >
+              <Text className="text-white font-bold">
+                Open Manage Users
+              </Text>
+            </Pressable>
           </View>
         )}
 
@@ -349,141 +219,6 @@ const handleDeleteUser = async (id: string) => {
           </View>
         </View>
       </ScrollView>
-
-      {/* Add User Modal */}
-      <Modal
-        visible={isAddUserModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setIsAddUserModalVisible(false)}
-      >
-        <View className="flex-1 bg-black bg-opacity-50 justify-end">
-          <View className="bg-background rounded-t-3xl p-6 max-h-4/5">
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-2xl font-bold text-foreground">Add New User</Text>
-                <Pressable onPress={() => setIsAddUserModalVisible(false)}>
-                  <Text className="text-2xl text-muted">✕</Text>
-                </Pressable>
-              </View>
-
-              <View className="mb-4">
-                <Text className="text-sm font-semibold text-foreground mb-2">Full Name</Text>
-                <TextInput
-                  className="bg-primary bg-opacity-20 border border-primary border-opacity-40 rounded-xl px-4 py-3 text-foreground"
-                  placeholder="John Doe"
-                  placeholderTextColor="#CBD5E1"
-                  value={newUserData.name}
-                  onChangeText={(text) => setNewUserData({ ...newUserData, name: text })}
-                />
-              </View>
-
-              <View className="mb-4">
-                <Text className="text-sm font-semibold text-foreground mb-2">Email</Text>
-                <TextInput
-                  className="bg-primary bg-opacity-20 border border-primary border-opacity-40 rounded-xl px-4 py-3 text-foreground"
-                  placeholder="user@school.com"
-                  placeholderTextColor="#CBD5E1"
-                  keyboardType="email-address"
-                  value={newUserData.email}
-                  onChangeText={(text) => setNewUserData({ ...newUserData, email: text })}
-                />
-              </View>
-
-              <View className="mb-4">
-                <Text className="text-sm font-semibold text-foreground mb-2">Password</Text>
-                <TextInput
-                  className="bg-primary bg-opacity-20 border border-primary border-opacity-40 rounded-xl px-4 py-3 text-foreground"
-                  placeholder="••••••••"
-                  placeholderTextColor="#CBD5E1"
-                  secureTextEntry
-                  value={newUserData.password}
-                  onChangeText={(text) => setNewUserData({ ...newUserData, password: text })}
-                />
-              </View>
-
-              <View className="mb-4">
-                <Text className="text-sm font-semibold text-foreground mb-2">Role</Text>
-                <View className="flex-row gap-2">
-                  {(["admin", "maintenance"] as const).map((role) => (
-                    <Pressable
-                      key={role}
-                      onPress={() => setNewUserData({ ...newUserData, role })}
-                      style={{
-                        backgroundColor:
-                          newUserData.role === role ? "#0A5BA8" : "rgba(10, 91, 168, 0.2)",
-                        borderColor: newUserData.role === role ? "#0A5BA8" : "#2D5A8C",
-                      }}
-                      className="flex-1 py-2 rounded-lg border items-center"
-                    >
-                      <Text
-                        className={`font-semibold ${newUserData.role === role ? "text-white" : "text-foreground"}`}
-                      >
-                        {role.charAt(0).toUpperCase() + role.slice(1)}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-
-              {newUserData.role === "maintenance" && (
-                <>
-                  <View className="mb-4">
-                    <Text className="text-sm font-semibold text-foreground mb-2">Employee ID</Text>
-                    <TextInput
-                      className="bg-primary bg-opacity-20 border border-primary border-opacity-40 rounded-xl px-4 py-3 text-foreground"
-                      placeholder="EMP001"
-                      placeholderTextColor="#CBD5E1"
-                      value={newUserData.employeeId}
-                      onChangeText={(text) => setNewUserData({ ...newUserData, employeeId: text })}
-                    />
-                  </View>
-
-                  <View className="mb-4">
-                    <Text className="text-sm font-semibold text-foreground mb-2">Shift</Text>
-                    <View className="flex-row gap-2">
-                      {(["morning", "afternoon", "evening"] as const).map((shift) => (
-                        <Pressable
-                          key={shift}
-                          onPress={() => setNewUserData({ ...newUserData, shift })}
-                          style={{
-                            backgroundColor:
-                              newUserData.shift === shift ? "#0A5BA8" : "rgba(10, 91, 168, 0.2)",
-                            borderColor: newUserData.shift === shift ? "#0A5BA8" : "#2D5A8C",
-                          }}
-                          className="flex-1 py-2 rounded-lg border items-center"
-                        >
-                          <Text
-                            className={`font-semibold text-xs ${newUserData.shift === shift ? "text-white" : "text-foreground"}`}
-                          >
-                            {shift.charAt(0).toUpperCase() + shift.slice(1)}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-                </>
-              )}
-
-              <Pressable
-                onPress={handleAddUser}
-                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                className="bg-primary rounded-xl py-3 items-center mb-3"
-              >
-                <Text className="text-white font-bold text-lg">Add User</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setIsAddUserModalVisible(false)}
-                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                className="rounded-xl py-3 items-center border border-border"
-              >
-                <Text className="text-foreground font-semibold">Cancel</Text>
-              </Pressable>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
 
       {/* Edit Threshold Modal */}
       <Modal

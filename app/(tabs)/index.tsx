@@ -367,9 +367,10 @@ export default function DashboardScreen() {
                   </Pressable>
 
                   {/* Edit details */}
-                  <Pressable
-                    onPress={handleEditDetails}
-                    style={({ pressed }) => [
+                  {user?.role === "admin" && (
+                    <Pressable
+                      onPress={handleEditDetails}
+                      style={({ pressed }) => [
                       {
                         backgroundColor: pressed ? "#4a4a4a" : "#737373",
                         transform: [{ scale: pressed ? 0.97 : 1 }],
@@ -379,13 +380,15 @@ export default function DashboardScreen() {
                   >
                     <Text className="text-white font-bold text-lg">Edit Details</Text>
                   </Pressable>
+                  )}
 
                   {/* Unassign Dispenser Button */}
-                  <Pressable
-                    onPress={handleUnassignDispenser}
-                    style={({ pressed }) => [
-                      {
-                        backgroundColor: pressed ? "#a21d1d" : "#b92f2f",
+                  {user?.role === "admin" && (
+                    <Pressable
+                      onPress={handleUnassignDispenser}
+                      style={({ pressed }) => [
+                        {
+                          backgroundColor: pressed ? "#a21d1d" : "#b92f2f",
                         transform: [{ scale: pressed ? 0.97 : 1 }],
                       },
                     ]}
@@ -393,6 +396,7 @@ export default function DashboardScreen() {
                   >
                     <Text className="text-white font-bold text-lg">Unassign Dispenser</Text>
                   </Pressable>
+                  )}
 
                   {/* Close Button */}
                   <Pressable

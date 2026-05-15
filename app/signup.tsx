@@ -12,7 +12,6 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<UserRole>("maintenance");
   const [employeeId, setEmployeeId] = useState("");
-  const [shift, setShift] = useState<"morning" | "afternoon" | "evening">("morning");
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useFirebaseAuth();
   const router = useRouter();
@@ -40,7 +39,6 @@ export default function SignUpScreen() {
         fullName: name,
         role,
         employeeId: role === "maintenance" ? employeeId : undefined,
-        shiftAssignment: role === "maintenance" ? (shift.charAt(0).toUpperCase() + shift.slice(1) as "Morning" | "Afternoon" | "Evening") : undefined,
       });
       router.replace("/(tabs)");
     } catch (error) {
@@ -177,30 +175,6 @@ export default function SignUpScreen() {
                   />
                 </View>
 
-                <View className="mb-4">
-                  <Text className="text-sm font-semibold text-foreground mb-2">Shift Assignment</Text>
-                  <View className="flex-row gap-2">
-                    {(["morning", "afternoon", "evening"] as const).map((s) => (
-                      <Pressable
-                        key={s}
-                        onPress={() => setShift(s)}
-                        disabled={isLoading}
-                        style={{
-                          backgroundColor: shift === s ? "#0A5BA8" : "rgba(10, 91, 168, 0.2)",
-                          borderWidth: 1,
-                          borderColor: shift === s ? "#0A5BA8" : "#2D5A8C",
-                        }}
-                        className="flex-1 rounded-lg py-2 items-center"
-                      >
-                        <Text
-                          className={`font-semibold text-xs ${shift === s ? "text-white" : "text-foreground"}`}
-                        >
-                          {s.charAt(0).toUpperCase() + s.slice(1)}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
               </>
             )}
 

@@ -70,7 +70,6 @@ users/{userId}
 ├── role: "admin" | "maintenance"
 ├── fullName: string
 ├── employeeId: string (optional)
-├── shiftAssignment: "Morning" | "Afternoon" | "Evening"
 └── createdAt: timestamp
 ```
 

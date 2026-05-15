@@ -254,7 +254,6 @@ backButton: {
   width: 40,
   height: 40,
   borderRadius: 10,
-  backgroundColor: "#1d2a45", 
   justifyContent: "center",
   alignItems: "center",
   marginRight: 12,
